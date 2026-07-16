@@ -25,13 +25,17 @@
       if (!video.getAttribute('src') && video.dataset.src) video.src = video.dataset.src;
     }
 
-    // Lazy load: the file is only fetched once its card gets within ~600px
-    // of the viewport, not for all 27 clips up front on page load.
+    // Lazy load: the file is only fetched once its card is about to enter
+    // the viewport. 600px was too generous for this grid's column count —
+    // with that many cards per row, half the gallery sat within 600px of
+    // the initial scroll position and downloaded immediately, defeating
+    // the point. A tight margin means only the next row or two ever loads
+    // ahead of the user actually scrolling to them.
     const io = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) { ensureLoaded(); io.disconnect(); }
       });
-    }, { rootMargin: '600px 0px' });
+    }, { rootMargin: '80px 0px' });
     io.observe(container);
 
     function togglePlay() {
