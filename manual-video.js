@@ -14,8 +14,25 @@
     btn.innerHTML = playIcon;
 
     // Always muted — these are silent preview reels, never auto-blast sound.
+    // Enforced here, on every play(), and on any stray 'volumechange' so
+    // nothing (this script, a browser extension, dev-tools poking) can ever
+    // make one of these produce sound on its own.
     video.muted = true;
+    video.addEventListener('volumechange', () => { if (!video.muted) video.muted = true; });
     let wantsPlay = false;
+
+    function ensureLoaded() {
+      if (!video.getAttribute('src') && video.dataset.src) video.src = video.dataset.src;
+    }
+
+    // Lazy load: the file is only fetched once its card gets within ~600px
+    // of the viewport, not for all 27 clips up front on page load.
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) { ensureLoaded(); io.disconnect(); }
+      });
+    }, { rootMargin: '600px 0px' });
+    io.observe(container);
 
     function togglePlay() {
       if (video.paused) {
@@ -24,7 +41,7 @@
           if (v !== video && !v.paused) v.pause();
         });
         video.muted = true;
-        if (!video.getAttribute('src')) video.src = video.dataset.src;
+        ensureLoaded();
         // The very first play() right after assigning src can be aborted by
         // the browser's own load kicking off (AbortError, silently caught) —
         // retry once the video reports it's actually ready, but only if the
