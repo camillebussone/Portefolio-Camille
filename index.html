@@ -952,37 +952,7 @@ class Component extends DCLogic {
       cards.forEach((card, i) => card.addEventListener('click', () => { active = i; layout(); }));
     }
 
-    // ---- Autoplay-muted real <video> gallery cards, click sound icon to unmute ----
-    // The src is only ever attached once a card nears the viewport (lazy fetch) —
-    // otherwise 20+ multi-MB clips all start downloading on page load at once.
-    document.querySelectorAll('[data-manual-video]').forEach(wrap => {
-      const vid = wrap.querySelector('video');
-      vid.muted = true;
-      let loaded = false;
-      // Force the browser to actually paint a frame once data is ready — some
-      // engines leave a <video> solid black until it has played at least a
-      // sliver, even at readyState 4.
-      vid.addEventListener('loadeddata', () => { if (vid.currentTime < 0.05) vid.currentTime = 0.08; }, { once: true });
-      const io2 = new IntersectionObserver((entries) => {
-        entries.forEach(en => {
-          if (en.isIntersecting) {
-            if (!loaded && vid.dataset.src) { vid.src = vid.dataset.src; loaded = true; }
-            vid.play().catch(() => {});
-          } else {
-            vid.pause();
-          }
-        });
-      }, { threshold: 0.15, rootMargin: '400px 0px' });
-      io2.observe(wrap);
-      const btn = wrap.querySelector('[data-vidplay]');
-      const setIcon = () => {
-        btn.innerHTML = vid.muted
-          ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="#fff"><path d="M4 9v6h4l5 5V4L8 9H4z"/><line x1="17" y1="9" x2="23" y2="15" stroke="#fff" stroke-width="2"/><line x1="23" y1="9" x2="17" y2="15" stroke="#fff" stroke-width="2"/></svg>'
-          : '<svg width="15" height="15" viewBox="0 0 24 24" fill="#fff"><path d="M4 9v6h4l5 5V4L8 9H4z"/><path d="M16.5 12a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/></svg>';
-      };
-      setIcon();
-      btn.addEventListener('click', () => { vid.muted = !vid.muted; setIcon(); });
-    });
+
 
     // ---- Product photo stack: visible cards fanned behind the front one;
     // the front card slides away to reveal the next ----

@@ -13,14 +13,27 @@
     container.dataset.wired = 'true';
     btn.innerHTML = playIcon;
 
+    // Always muted — these are silent preview reels, never auto-blast sound.
+    video.muted = true;
+    let wantsPlay = false;
+
     function togglePlay() {
-      if (!video.getAttribute('src')) video.src = video.dataset.src;
       if (video.paused) {
+        wantsPlay = true;
         document.querySelectorAll('[data-manual-video] video').forEach((v) => {
           if (v !== video && !v.paused) v.pause();
         });
-        video.play().catch(() => {});
+        video.muted = true;
+        if (!video.getAttribute('src')) video.src = video.dataset.src;
+        // The very first play() right after assigning src can be aborted by
+        // the browser's own load kicking off (AbortError, silently caught) —
+        // retry once the video reports it's actually ready, but only if the
+        // user hasn't paused again in the meantime.
+        const tryPlay = () => { if (wantsPlay && video.paused) video.play().catch(() => {}); };
+        tryPlay();
+        video.addEventListener('canplay', tryPlay, { once: true });
       } else {
+        wantsPlay = false;
         video.pause();
       }
     }
