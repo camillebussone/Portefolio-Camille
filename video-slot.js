@@ -76,6 +76,10 @@
     '.empty .sub u{text-underline-offset:2px}' +
     ':host([data-over]) {outline:2px solid #c96442;outline-offset:-2px;background:rgba(201,100,66,.10)}' +
     ':host([data-filled]) .empty{display:none}' +
+    // Read-only (published site, outside the omelette editor): no upload
+    // invitation on an empty slot — it can't do anything for a visitor.
+    ':host(:not([data-editable])) .empty{cursor:default}' +
+    ':host(:not([data-editable])) .empty .sub{display:none}' +
     '.bar{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;' +
     '  padding:8px;opacity:0;transition:opacity .15s;pointer-events:none;z-index:2}' +
     ':host([data-filled]:hover) .bar,:host([data-filled][data-paused]) .bar{opacity:1;pointer-events:auto}' +
@@ -138,11 +142,11 @@
       this._depth = 0;
       this._objUrl = null;
 
-      this._empty.addEventListener('click', () => this._input.click());
+      this._empty.addEventListener('click', () => { if (this._editable()) this._input.click(); });
       root.addEventListener('click', (e) => {
         const act = e.target.closest && e.target.closest('button') && e.target.closest('button').getAttribute('data-act');
-        if (act === 'replace') this._input.click();
-        if (act === 'clear') this._clear();
+        if (act === 'replace' && this._editable()) this._input.click();
+        if (act === 'clear' && this._editable()) this._clear();
         if (act === 'restart') {
           this._video.currentTime = 0;
           this._video.play().catch(() => {});
@@ -173,6 +177,15 @@
       return (this.getAttribute('manual') || '').toLowerCase() === 'true';
     }
 
+    // Drops only ever land in this browser's own IndexedDB (there's no
+    // shared sidecar for video like image-slot.js has), so outside the
+    // omelette editor this must be read-only — otherwise any visitor to
+    // the published site could "fill" a slot for themselves, and it looks
+    // like an open upload box on an empty one.
+    _editable() {
+      return !!(window.omelette && window.omelette.writeFile);
+    }
+
     _togglePlay() {
       const wasPaused = this._video.paused;
       if (wasPaused) {
@@ -199,11 +212,13 @@
         VideoSlot._warned = true;
         console.warn('<video-slot> without an id will not persist its dropped video.');
       }
-      this.addEventListener('dragenter', this);
-      this.addEventListener('dragover', this);
-      this.addEventListener('dragleave', this);
-      this.addEventListener('drop', this);
-      this.toggleAttribute('data-editable', true);
+      if (this._editable()) {
+        this.addEventListener('dragenter', this);
+        this.addEventListener('dragover', this);
+        this.addEventListener('dragleave', this);
+        this.addEventListener('drop', this);
+      }
+      this.toggleAttribute('data-editable', this._editable());
       this._render();
       this._hydrate();
     }
@@ -247,6 +262,7 @@
     }
 
     async _ingest(file) {
+      if (!this._editable()) return;
       this._setError(null);
       if (!file || (ACCEPT.indexOf(file.type) < 0 && !/\.mp4$/i.test(file.name))) {
         this._setError('Dépose un fichier MP4, MOV ou WebM.');
