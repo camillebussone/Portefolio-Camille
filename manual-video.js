@@ -11,8 +11,10 @@
 //    files) is click-to-load-and-play only. Nothing about them fetches or
 //    plays until the visitor actually clicks — this is deliberately the
 //    lightest option for a page with this much video.
-// In both cases the button is a sound on/off toggle (starts muted);
-// clicking the video itself pauses/resumes it.
+// The button is a sound on/off toggle. Clicking the video itself
+// pauses/resumes it, and starting playback that way also turns sound on
+// immediately (no need to hit the sound button separately) — autoplay
+// (the hero carousel scrolling into view) stays muted regardless.
 (() => {
   const soundOff = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z" fill="#fff" stroke="none"/><line x1="16" y1="9" x2="22" y2="15"/><line x1="22" y1="9" x2="16" y2="15"/></svg>';
   const soundOn = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z" fill="#fff" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
@@ -101,8 +103,18 @@
     video.addEventListener('pause', syncOverlay);
 
     video.addEventListener('click', () => {
-      if (video.paused) { userPaused = false; attemptPlay(); }
-      else { userPaused = true; video.pause(); }
+      if (video.paused) {
+        userPaused = false;
+        attemptPlay();
+        // A deliberate click-to-play means the visitor wants to watch —
+        // turn sound on immediately instead of making them hit the sound
+        // button too. Autoplay (hero-on-scroll) is untouched, still silent.
+        video.muted = false;
+        btn.innerHTML = soundOn;
+      } else {
+        userPaused = true;
+        video.pause();
+      }
     });
   }
 
