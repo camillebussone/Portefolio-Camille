@@ -3,10 +3,16 @@
 // nor video-slot.js ever promotes data-src to src or handles playback, so
 // without this these videos never load at all.
 //
-// Behavior: each clip lazy-loads and autoplays muted once its card is
-// mostly in view, and pauses once it scrolls back out — like an Instagram/
-// TikTok grid preview. The button is a sound on/off toggle (starts muted);
-// clicking the video itself pauses/resumes it manually.
+// Behavior:
+//  - Hero carousel (the rotating cards at the top, inside [data-carousel-card])
+//    lazy-load and autoplay muted as they come into view — there are only 5,
+//    it's the first thing a visitor sees.
+//  - Every other clip (the full reel gallery, potentially dozens of large
+//    files) is click-to-load-and-play only. Nothing about them fetches or
+//    plays until the visitor actually clicks — this is deliberately the
+//    lightest option for a page with this much video.
+// In both cases the button is a sound on/off toggle (starts muted);
+// clicking the video itself pauses/resumes it.
 (() => {
   const soundOff = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z" fill="#fff" stroke="none"/><line x1="16" y1="9" x2="22" y2="15"/><line x1="22" y1="9" x2="16" y2="15"/></svg>';
   const soundOn = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z" fill="#fff" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
@@ -17,7 +23,9 @@
     if (!video || !btn || container.dataset.wired) return;
     container.dataset.wired = 'true';
 
-    // Starts muted so scrolling through the grid never blasts sound —
+    const isHero = !!container.closest('[data-carousel-card]');
+
+    // Starts muted so autoplaying the hero carousel never blasts sound —
     // the button lets the visitor deliberately turn it on per clip.
     video.muted = true;
     btn.innerHTML = soundOff;
@@ -50,20 +58,21 @@
       video.addEventListener('canplay', tryPlay, { once: true });
     }
 
-    // Lazy load + autoplay: fetch and play once the card is mostly in view,
-    // pause once it isn't. rootMargin is deliberately tight — 600px was
-    // generous enough that, on this grid's column count, most of the
-    // gallery loaded (and would have autoplayed) immediately on page load.
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          if (!userPaused) attemptPlay();
-        } else if (!video.paused) {
-          video.pause();
-        }
-      });
-    }, { rootMargin: '80px 0px', threshold: 0.4 });
-    io.observe(container);
+    if (isHero) {
+      // Only the 5 hero clips lazy-load + autoplay as they scroll into view.
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            if (!userPaused) attemptPlay();
+          } else if (!video.paused) {
+            video.pause();
+          }
+        });
+      }, { rootMargin: '80px 0px', threshold: 0.4 });
+      io.observe(container);
+    }
+    // Everything else (the reel gallery, the Wilgo feature card, etc.) does
+    // nothing until clicked — no fetch, no observer, no autoplay.
 
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
