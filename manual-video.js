@@ -27,6 +27,14 @@
     // choice by resuming it.
     let userPaused = false;
 
+    // Some mobile engines (iOS Safari especially) leave the frame solid
+    // black/blank until the video has actually advanced past 0 — even once
+    // readyState is 4 and playback has "started". Nudging currentTime the
+    // instant data is available forces a real frame to paint.
+    video.addEventListener('loadeddata', () => {
+      if (video.currentTime < 0.05) video.currentTime = 0.08;
+    }, { once: true });
+
     function ensureLoaded() {
       if (!video.getAttribute('src') && video.dataset.src) video.src = video.dataset.src;
     }
