@@ -252,6 +252,12 @@
 
     async _hydrate() {
       if (!this.id) return;
+      // Outside the omelette editor there's no legitimate stored content —
+      // video never had a shared sidecar, so anything in this browser's
+      // IndexedDB is leftover test data (e.g. from editing/QA on this
+      // device) that would otherwise "autoplay" for this visitor only,
+      // looking like a real clip that randomly starts itself.
+      if (!this._editable()) return;
       try {
         const blob = await dbGet(this.id);
         // Don't blast-autoplay every reel on page load — only the ones
