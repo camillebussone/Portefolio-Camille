@@ -3,6 +3,28 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+@media (max-width: 768px) {
+  [style*="grid-template-columns: 1.05fr 1fr"],
+  [style*="grid-template-columns: 0.85fr 1.15fr"],
+  [style*="grid-template-columns: 1.2fr 0.8fr"],
+  [style*="grid-template-columns: 1fr 1fr"],
+  [style*="grid-template-columns: repeat(3, 1fr)"],
+  [style*="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr))"],
+  [style*="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr))"],
+  [style*="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr))"] {
+    grid-template-columns: 1fr !important;
+  }
+  /* Hero carousel is fixed-width absolutely-positioned cards, not a grid —
+     shrink it as a whole so cards stop overflowing off-screen. */
+  [data-carousel="true"] {
+    transform: scale(0.68);
+    transform-origin: top center;
+    height: 360px !important;
+  }
+  body { overflow-x: hidden; }
+}
+</style>
 <script src="./support.js"></script>
 </head>
 <body>
