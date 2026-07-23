@@ -32,22 +32,23 @@
     video.muted = true;
     btn.innerHTML = soundOff;
 
-    // Click-to-load cards (everything but the hero) otherwise look like a
-    // blank/broken beige box until clicked — nothing hints that a tap does
-    // anything. A big centered play button makes the "click me" obvious,
-    // and disappears once playing.
-    let playOverlay = null;
-    if (!isHero) {
-      playOverlay = document.createElement('div');
-      playOverlay.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;';
-      playOverlay.innerHTML = '<div style="width:52px;height:52px;border-radius:50%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);">' +
-        '<svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><polygon points="6 4 20 12 6 20 6 4"/></svg></div>';
-      container.appendChild(playOverlay);
-      container.style.cursor = 'pointer';
-    }
+    // Click-to-load cards otherwise look like a blank/broken beige box
+    // until clicked — nothing hints that a tap does anything. A big
+    // centered play button makes the "click me" obvious, and disappears
+    // once playing. Hero cards get one too: some mobile browsers (data
+    // saver modes especially) silently refuse the scripted autoplay even
+    // muted, which without this looks like a frozen, dead video with no
+    // way to tell it's actually tappable — this is the fallback for that.
+    const playOverlay = document.createElement('div');
+    playOverlay.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;';
+    playOverlay.innerHTML = '<div style="width:52px;height:52px;border-radius:50%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);">' +
+      '<svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><polygon points="6 4 20 12 6 20 6 4"/></svg></div>';
+    container.appendChild(playOverlay);
+    container.style.cursor = 'pointer';
     function syncOverlay() {
-      if (playOverlay) playOverlay.style.display = video.paused ? 'flex' : 'none';
+      playOverlay.style.display = video.paused ? 'flex' : 'none';
     }
+    syncOverlay();
 
     // Set when the user explicitly pauses via clicking the video, so
     // scrolling the card out of view and back doesn't override their
